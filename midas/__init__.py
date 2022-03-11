@@ -1,5 +1,6 @@
 import os
 import json
+import inspect
 import pytest
 import logging
 
@@ -24,15 +25,13 @@ assert strip_trailing_newline('hello\r\n') == 'hello'
 assert strip_trailing_newline('hello\r') == 'hello\r'
 assert strip_trailing_newline('hello\n\n') == 'hello\n'
 
-def golden_test(format):
+def test(format):
     def internal(func):
-        filename = func.__name__
-        base_dir = os.path.dirname(func.__code__.co_filename)
+        test_name = func.__name__
+        test_dir = os.path.dirname(func.__code__.co_filename)
         assert format == 'lines'
 
-        in_path = os.path.abspath(os.path.join(base_dir, filename + '.in'))
-        gold_path = os.path.abspath(os.path.join(base_dir, filename + '.gold'))
-        actual_path = os.path.abspath(os.path.join(base_dir, filename + '.actual'))
+        in_path, gold_path, actual_path = get_midas_paths(test_dir, test_name)
         try:
             o = open(in_path, 'r')
         except:
@@ -71,3 +70,41 @@ def golden_test(format):
             midas_assert(expected, result)
         return test_func
     return internal
+
+SNAPSHOT_COUNTS = {}
+def assert_snapshot(actual):
+    result = repr(actual)
+    test_name, test_dir = find_calling_test()
+    if test_name not in SNAPSHOT_COUNTS:
+        SNAPSHOT_COUNTS[test_name] = 0
+    count = SNAPSHOT_COUNTS[test_name]
+    SNAPSHOT_COUNTS[test_name] += 1
+
+    snapshot_name = test_name + '__' + str(count)
+    _in_path, gold_path, actual_path = get_midas_paths(test_dir, snapshot_name)
+    try:
+        with open(gold_path) as f:
+            gold = f.read()
+    except:
+        logger.warning(f"No .gold file, maybe run mv {actual_path} {gold_path}")
+        gold = None
+
+    # we always want to write the actual result to a file
+    with open(actual_path, 'w') as f:
+        f.write(result)
+    midas_assert(gold, result)
+
+def find_calling_test():
+    current_frame = inspect.currentframe()
+    frames = inspect.getouterframes(current_frame, context=20)
+    # 0 is us, 1 is assert_snapshot()
+    for frame in frames[2:]:
+        name = frame.function
+        if name.startswith('test_'):
+            return name, os.path.dirname(frame.filename)
+    raise Exception('midas expects assert_snapshot() to be at most 20 function calls deep into a function called test_<something>()')
+
+def get_midas_paths(test_dir, test_name):
+    return (os.path.abspath(os.path.join(test_dir, test_name + '.in')),
+        os.path.abspath(os.path.join(test_dir, test_name + '.gold')),
+        os.path.abspath(os.path.join(test_dir, test_name + '.actual')))
