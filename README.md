@@ -99,3 +99,7 @@ FAILED tests/test_api.py::test_length[Foo-'3'] - AssertionError
 FAILED tests/test_api.py::test_length[What a wonderful world-'22'] - AssertionError
 ================================================================ 3 failed, 1 passed in 0.03s =================================================================
 ```
+
+## License
+
+`midas` is distributed under the MIT license.
