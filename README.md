@@ -5,7 +5,7 @@ If you're tired of writing assertions like `assert my_func('input') == 'output'`
 ## Installation
 
 ```
-pip install midas
+pip install midastest
 ```
 
 ## Usage
