@@ -15,7 +15,7 @@ Write a test using your favorite testing framework. You can use any framework as
 ```
 import midas
 
-@midas.golden_test(format='lines')
+@midas.test(format='lines')
 def test_length(line):
     return str(len(line))
 ```
@@ -33,7 +33,7 @@ Run your testing tool:
 
 ```
 pytest
-# TODO: show compaining output
+# TODO: show complaining output
 ```
 
 After inspecting the output, move it to a file called `test_length.gold`:
@@ -67,7 +67,7 @@ Try changing the code:
 ```
 import pytest
 
-@midas.golden_test(format='lines')
+@midas.test(format='lines')
 def test_length(line):
     return str(len(line) * 2)
 ```
